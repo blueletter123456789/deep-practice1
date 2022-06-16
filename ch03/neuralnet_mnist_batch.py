@@ -47,17 +47,15 @@ if __name__ == '__main__':
     x, t = get_data()
     network = init_network()
 
+    batch_size = 100
     accurancy_cnt = 0
-    accurancy_lst = [[0]*2 for _ in range(10)]
-    for tgt, expected in zip(x, t):
-        y = predict(network, tgt)
-        p = np.argmax(y)
-        accurancy_lst[expected][1] += 1
-        if p == expected:
-            accurancy_cnt += 1
-            accurancy_lst[expected][0] += 1
+    
+    for i in range(0, len(x), batch_size):
+        x_batch = x[i: i+batch_size]
+        y_batch = predict(network, x_batch)
+        p = np.argmax(y_batch, axis=1)
+        accurancy_cnt += np.sum(p == t[i:i+batch_size])
     
     print('Accurancy: ', accurancy_cnt / len(x))
-    for i, rst in enumerate(accurancy_lst):
-        print('{}: {}'.format(i, rst[0]/rst[1]))
+
 
