@@ -8,6 +8,15 @@ from dataset.mnist import load_mnist
 
 
 def cross_entropy_error(y, t):
+    """Cross entropy
+
+    Args:
+        y (List): output of neural network
+        t (List): training data(numeric values)
+
+    Returns:
+        float: cross entropy loss
+    """
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
@@ -17,6 +26,17 @@ def cross_entropy_error(y, t):
 
 
 def cross_entropy_error_num(y, t):
+    """Cross entropy
+
+    When training data is given as labels (numerical values)
+
+    Args:
+        y (List): output of neural network
+        t (List): training data(numeric values)
+
+    Returns:
+        float: cross entropy loss
+    """
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
@@ -37,6 +57,7 @@ if __name__ == '__main__':
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
 
+    # it is need processing by neural network...
 
     # Ex.
     t = np.array([0,0,1,0,0,0,0,0,0,0])

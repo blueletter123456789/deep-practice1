@@ -1,7 +1,16 @@
 import numpy as np
 
 def cross_entropy_error(y, t):
-    # np.log(0)の場合、-infと計算されるため
+    """Cross Entropy Error
+
+    Args:
+        y (List): output of neural network
+        t (List): true label
+
+    Returns:
+        float: Cross-Entropy Error
+    """
+    # if np.log(0), then it is calculated as -inf
     delta = 1e-7
     return -np.sum(t * np.log(y + delta))
 
