@@ -1,6 +1,8 @@
 import numpy as np
 
 def function_2(x):
+    # smaple function
+    # f(x0, x1) = x0^2 + x1^2
     return np.sum(x**2)
 
 def numeric_gradient(f, x):
@@ -9,9 +11,12 @@ def numeric_gradient(f, x):
 
     for idx in range(x.size):
         tmp_val = x[idx]
+
+        # calculate forward difference
         x[idx] = tmp_val + h
         fxh1 = f(x)
 
+        # calculate backward dirrerence
         x[idx] = tmp_val - h
         fxh2 = f(x)
 

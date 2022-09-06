@@ -22,8 +22,10 @@ def _numerical_gradient_no_batch(f, x):
 
 def numerical_gradient(f, X):
     if X.ndim == 1:
+        # Assumed in the form of [x0, x1 ... xk]
         return _numerical_gradient_no_batch(f, X)
     else:
+        # Assumed in the form of [[x0, y0],[x1, y1] ... [xk, yk]]
         grad = np.zeros_like(X)
 
         for idx, x in enumerate(X):
