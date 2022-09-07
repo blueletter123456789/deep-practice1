@@ -1,12 +1,21 @@
 import numpy as np
 
 
+def sigmoid(x):
+    # kind of activation function
+    return 1 / (1 * np.exp(-x))
+
+def sigmoid_grad(x):
+    return (1.0 - sigmoid(x)) * sigmoid(x)
+
 def soft_max(x):
+    # kind of activation function used in the output layer. 
     x = x - np.max(x, axis=-1, keepdims=True)
     return np.exp(x) / np.sum(np.exp(x), axis=-1, keepdims=True)
 
 
 def cross_entropy_error(y, t):
+    # kind of loss function
     if y.ndim == 1:
         t = t.reshape(1, t.size)
         y = y.reshape(1, y.size)
