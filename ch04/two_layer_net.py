@@ -113,7 +113,7 @@ class TwoLayerNet:
         # backward
         dy = (y - t) / batch_num
         grads['W2'] = np.dot(z1.T, dy)
-        grads['b2'] = np.sum(dy, axit=0)
+        grads['b2'] = np.sum(dy, axis=0)
 
         dz1 = np.dot(dy, W2.T)
         da1 = sigmoid_grad(a1) * dz1
