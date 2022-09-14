@@ -178,12 +178,14 @@ class Dropout:
 
     def forward(self, x, train_flg=True):
         if train_flg:
+            # Create an array of the same shape as x. (True of False)
             self.mask = np.random.rand(*x.shape) > self.dropout_ratio
             return x * self.mask
         else:
             return x * (1.0 - self.dropout_ratio)
 
     def backward(self, dout):
+        # Only pass through what flows in forward propagation.
         return dout * self.mask
 
 class BatchNormalization:

@@ -97,6 +97,7 @@ class MultiLayerNet:
         weight_decay = 0
         for idx in range(1, self.hidden_layer_num + 2):
             W = self.params['W' + str(idx)]
+            # To add L2 norm: 1/2*λ*W^2
             weight_decay += 0.5 * self.weight_decay_lambda * np.sum(W ** 2)
 
         return self.last_layer.forward(y, t) + weight_decay
@@ -159,6 +160,7 @@ class MultiLayerNet:
         
         grads = {}
         for idx in range(1, self.hidden_layer_num+2):
+            # In back propagation λW is propagated.
             grads['W' + str(idx)] = self.layers['Affine' + str(idx)].dW + self.weight_decay_lambda * self.layers['Affine' + str(idx)].W
             grads['b' + str(idx)] = self.layers['Affine' + str(idx)].dB
 
