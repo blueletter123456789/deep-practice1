@@ -1,6 +1,8 @@
+from turtle import forward
 import numpy as np
 
 from common.functions import *
+from common.util import im2col, col2im
 
 class Relu:
     def __init__(self):
@@ -265,3 +267,135 @@ class BatchNormalization:
         self.dbeta = dbeta
         
         return dx
+
+class Convolution:
+    def __init__(self, W, b, stride=1, pad=0):
+        """Initialize convolutional layer
+
+        Args:
+            W (ndarray): array of filter
+            b (ndarray): array of bias
+            stride (int, optional): Number of filters stride. Defaults to 1.
+            pad (int, optional): Number of input data padding. Defaults to 0.
+        """
+        self.W = W
+        self.b = b
+        self.stride = stride
+        self.pad = pad
+
+        # intermediate data
+        self.x = None
+        self.col = None
+        self.col_W = None
+
+        self.dW = None
+        self.dB = None
+    
+    def forward(self, x):
+        """Forwarding in convolutional layer
+
+        Args:
+            x (ndarray): image data
+
+        Returns:
+            ndarray: output data
+        """
+        FN, C, FH, FW = self.W.shape
+        N, C, H, W = x.shape
+
+        out_h = int((H + 2*self.pad - FH)/self.stride) + 1
+        out_w = int((W + 2*self.pad - FW)/self.stride) + 1
+
+        col = im2col(x, FH, FW, self.stride, self.pad)
+        # Arrange filters by columns.
+        col_W = self.W.reshape(FN, -1).T
+
+        out = np.dot(col, col_W) + self.b
+        # (N, H, W, C) → (N, C, H, W)
+        out = out.reshape(N, out_h, out_w, -1).transpose(0, 3, 1, 2)
+
+        self.x = x
+        self.col = col
+        self.col_W = col_W
+
+        return out
+    
+    def backward(self, dout):
+        """Backward in convolution layer
+
+        Args:
+            dout (ndarray): Differentiation of y
+
+        Returns:
+            ndarray: Differentiation of x
+        """
+        FN, C, FH, FW = self.W.shape
+        # (N, FN, Oh, Ow) → (NOhOw, FN)
+        dout = dout.transpose(0, 2, 3, 1).reshape(-1, FN)
+
+        # Number of each element of the gradient added (1, FN)
+        self.dB = np.sum(dout, axis=0)
+
+        # Differentiation of filter
+        # (CFhFw, NOhOw) * (NOhOw, FN) = (CFhFw, Fn)
+        self.dW = np.dot(self.col.T, dout)
+        self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
+
+        # Differentiation of input data
+        # (NOhOw, FN) * (FN, CFhFw) = (NOhOw, CFhFw)
+        dcol = np.dot(dout, self.col_W.T)
+        dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
+
+        return dx
+
+class Pooling:
+    def __init__(self, pool_h, pool_w, stride=2, pad=0):
+        self.pool_h = pool_h
+        self.pool_w = pool_w
+        self.stride = stride
+        self.pad = pad
+
+        self.x = None
+        self.arg_max = None
+    
+    def forward(self, x):
+        N, C, H, W = x.shape
+
+        out_h = int((H - self.pool_h) / self.stride) + 1
+        out_w = int((W - self.pool_w) / self.stride) + 1
+
+        # (N C, H, W) → (NOhOw, CPhPw)
+        col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
+        # (NOhOw, CPhPw) → (NOhOwC, PhPw)
+        col = col.reshape(-1, self.pool_h * self.pool_w)
+
+        # Get the index of the maximum value of each row. (NOhOw, )
+        arg_max = np.argmax(col, axis=1)
+        # Get the maximum value of each row. (NOhOw, )
+        out = np.max(col, axis=1)
+
+        # (NOhOwC, ) → (N, C, Oh, Ow)
+        out = out.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
+
+        self.x = x
+        self.arg_max = arg_max
+
+        return out
+    
+    def backward(self, dout):
+        # input shape is (N, C, Oh, Ow)
+        dout = dout.transpose(0, 2, 3, 1)
+
+        pool_size = self.pool_h * self.pool_w
+
+        # crate colsize (NCOhOw, PhPw)
+        dmax = np.zeros((dout.size, pool_size))
+        dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
+        dmax = dmax.reshape(dout.shape + (pool_size,))
+
+        # (N, Oh, Ow, C, PhPw) → (NOhOw, CPhPw)
+        dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
+        dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
+
+        return dx
+    
